@@ -7,34 +7,26 @@ import (
 	"github.com/D1sordxr/image-processor/internal/domain/core/image/options"
 	"github.com/D1sordxr/image-processor/internal/domain/core/image/vo"
 	"github.com/D1sordxr/image-processor/internal/infrastructure/storage/postgres/repositories/image/gen"
-	"github.com/google/uuid"
 )
 
 func ToCreateImageParams(params options.ImageCreateParams) gen.CreateImageParams {
+	resultUrlStr := params.ResultURL.String()
 	return gen.CreateImageParams{
 		ID:           params.ID,
 		OriginalName: params.OriginalName,
 		FileName:     params.FileName.String(),
 		Status:       params.Status.String(),
-		ResultUrl:    toNullStringFromResultURL(params.ResultURL),
+		ResultUrl:    toNullString(&resultUrlStr),
 		Size:         params.Size,
 		Format:       params.Format,
 		UploadedAt:   params.UploadedAt,
 	}
 }
 
-func ToUpdateImageParams(id uuid.UUID, params options.ImageUpdateParams) gen.UpdateImageParams {
-	return gen.UpdateImageParams{
-		ID:        id,
-		Status:    toStringFromStatus(params.Status),
-		ResultUrl: toNullStringFromResultURL(params.ResultURL),
-	}
-}
-
-func ToUpdateImageStatusParams(id uuid.UUID, status vo.Status) gen.UpdateImageStatusParams {
+func ToUpdateImageStatusParams(params options.ImageUpdateParams) gen.UpdateImageStatusParams {
 	return gen.UpdateImageStatusParams{
-		ID:     id,
-		Status: status.String(),
+		ID:     params.ImageID,
+		Status: params.Status.String(),
 	}
 }
 

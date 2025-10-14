@@ -94,6 +94,26 @@ func (s3 *S3Repository) Get(ctx context.Context, filename string) ([]byte, error
 	return data, nil
 }
 
+func (s3 *S3Repository) GetOriginal(ctx context.Context, filename string) ([]byte, error) {
+	object, err := s3.storage.Client.GetObject(
+		ctx,
+		s3.bucketName,
+		vo.NewFilenameOriginal(filename).String(),
+		minio.GetObjectOptions{},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get object: %w", err)
+	}
+	defer func() { _ = object.Close() }()
+
+	data, err := io.ReadAll(object)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read object data: %w", err)
+	}
+
+	return data, nil
+}
+
 func (s3 *S3Repository) Delete(ctx context.Context, filename string) error {
 	err := s3.storage.Client.RemoveObject(ctx, s3.bucketName, filename, minio.RemoveObjectOptions{})
 	if err != nil {

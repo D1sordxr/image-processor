@@ -7,7 +7,6 @@ SELECT
     i.*,
     p.width,
     p.height,
-    p.processed_name,
     p.processed_at
 FROM images i
          LEFT JOIN processed_images p ON i.id = p.image_id
@@ -66,7 +65,7 @@ WHERE
     (sqlc.narg('status')::VARCHAR IS NULL OR status = sqlc.narg('status')) AND
     (sqlc.narg('format')::VARCHAR IS NULL OR format = sqlc.narg('format')) AND
     (sqlc.narg('from_date')::TIMESTAMP IS NULL OR uploaded_at >= sqlc.narg('from_date')) AND
-    (sqlc.narg('to_date')::TIMESTAMP IS NULL OR uploaded_at <= sqlc.narg('from_date'));
+    (sqlc.narg('to_date')::TIMESTAMP IS NULL OR uploaded_at <= sqlc.narg('to_date'));
 
 -- name: GetImagesByFileName :many
 SELECT * FROM images
@@ -75,9 +74,9 @@ ORDER BY uploaded_at DESC;
 
 -- name: CreateProcessedImage :one
 INSERT INTO processed_images (
-    image_id, width, height, processed_name, processed_at
+    image_id, width, height, processed_at
 ) VALUES (
-             $1, $2, $3, $4, $5
+             $1, $2, $3, $4
          )
     RETURNING *;
 
@@ -90,8 +89,7 @@ UPDATE processed_images
 SET
     width = $2,
     height = $3,
-    processed_name = $4,
-    processed_at = $5
+    processed_at = $4
 WHERE image_id = $1
     RETURNING *;
 
@@ -104,7 +102,6 @@ SELECT
     i.*,
     p.width,
     p.height,
-    p.processed_name,
     p.processed_at
 FROM images i
          JOIN processed_images p ON i.id = p.image_id

@@ -7,5 +7,7 @@ import (
 )
 
 type Repository interface {
-	SaveImageMetadata(ctx context.Context, params options.ImageCreateParams) (*model.ImageMetadata, error)
+	Save(ctx context.Context, params options.ImageCreateParams) (*model.ImageMetadata, error)
+	SaveProcessed(ctx context.Context, p options.ProcessedImageCreateParams) error
+	UpdateStatus(ctx context.Context, p options.ImageUpdateParams) error
 }

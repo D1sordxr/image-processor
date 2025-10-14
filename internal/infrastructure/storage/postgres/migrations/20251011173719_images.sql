@@ -15,7 +15,6 @@ CREATE TABLE processed_images (
     image_id UUID PRIMARY KEY REFERENCES images(id) ON DELETE CASCADE,
     width INT NOT NULL,
     height INT NOT NULL,
-    processed_name VARCHAR NOT NULL,
     processed_at TIMESTAMP NOT NULL
 );
 

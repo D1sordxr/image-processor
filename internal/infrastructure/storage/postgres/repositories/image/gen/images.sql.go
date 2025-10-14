@@ -19,7 +19,7 @@ WHERE
     ($1::VARCHAR IS NULL OR status = $1) AND
     ($2::VARCHAR IS NULL OR format = $2) AND
     ($3::TIMESTAMP IS NULL OR uploaded_at >= $3) AND
-    ($4::TIMESTAMP IS NULL OR uploaded_at <= $3)
+    ($4::TIMESTAMP IS NULL OR uploaded_at <= $4)
 `
 
 type CountImagesWithFiltersParams struct {
@@ -88,19 +88,18 @@ func (q *Queries) CreateImage(ctx context.Context, db DBTX, arg CreateImageParam
 
 const createProcessedImage = `-- name: CreateProcessedImage :one
 INSERT INTO processed_images (
-    image_id, width, height, processed_name, processed_at
+    image_id, width, height, processed_at
 ) VALUES (
-             $1, $2, $3, $4, $5
+             $1, $2, $3, $4
          )
-    RETURNING image_id, width, height, processed_name, processed_at
+    RETURNING image_id, width, height, processed_at
 `
 
 type CreateProcessedImageParams struct {
-	ImageID       uuid.UUID `json:"image_id"`
-	Width         int32     `json:"width"`
-	Height        int32     `json:"height"`
-	ProcessedName string    `json:"processed_name"`
-	ProcessedAt   time.Time `json:"processed_at"`
+	ImageID     uuid.UUID `json:"image_id"`
+	Width       int32     `json:"width"`
+	Height      int32     `json:"height"`
+	ProcessedAt time.Time `json:"processed_at"`
 }
 
 func (q *Queries) CreateProcessedImage(ctx context.Context, db DBTX, arg CreateProcessedImageParams) (ProcessedImage, error) {
@@ -108,7 +107,6 @@ func (q *Queries) CreateProcessedImage(ctx context.Context, db DBTX, arg CreateP
 		arg.ImageID,
 		arg.Width,
 		arg.Height,
-		arg.ProcessedName,
 		arg.ProcessedAt,
 	)
 	var i ProcessedImage
@@ -116,7 +114,6 @@ func (q *Queries) CreateProcessedImage(ctx context.Context, db DBTX, arg CreateP
 		&i.ImageID,
 		&i.Width,
 		&i.Height,
-		&i.ProcessedName,
 		&i.ProcessedAt,
 	)
 	return i, err
@@ -168,7 +165,6 @@ SELECT
     i.id, i.original_name, i.file_name, i.status, i.result_url, i.size, i.format, i.uploaded_at,
     p.width,
     p.height,
-    p.processed_name,
     p.processed_at
 FROM images i
          LEFT JOIN processed_images p ON i.id = p.image_id
@@ -176,18 +172,17 @@ WHERE i.id = $1
 `
 
 type GetImageWithProcessedDataRow struct {
-	ID            uuid.UUID      `json:"id"`
-	OriginalName  string         `json:"original_name"`
-	FileName      string         `json:"file_name"`
-	Status        string         `json:"status"`
-	ResultUrl     sql.NullString `json:"result_url"`
-	Size          int64          `json:"size"`
-	Format        string         `json:"format"`
-	UploadedAt    time.Time      `json:"uploaded_at"`
-	Width         sql.NullInt32  `json:"width"`
-	Height        sql.NullInt32  `json:"height"`
-	ProcessedName sql.NullString `json:"processed_name"`
-	ProcessedAt   sql.NullTime   `json:"processed_at"`
+	ID           uuid.UUID      `json:"id"`
+	OriginalName string         `json:"original_name"`
+	FileName     string         `json:"file_name"`
+	Status       string         `json:"status"`
+	ResultUrl    sql.NullString `json:"result_url"`
+	Size         int64          `json:"size"`
+	Format       string         `json:"format"`
+	UploadedAt   time.Time      `json:"uploaded_at"`
+	Width        sql.NullInt32  `json:"width"`
+	Height       sql.NullInt32  `json:"height"`
+	ProcessedAt  sql.NullTime   `json:"processed_at"`
 }
 
 func (q *Queries) GetImageWithProcessedData(ctx context.Context, db DBTX, id uuid.UUID) (GetImageWithProcessedDataRow, error) {
@@ -204,7 +199,6 @@ func (q *Queries) GetImageWithProcessedData(ctx context.Context, db DBTX, id uui
 		&i.UploadedAt,
 		&i.Width,
 		&i.Height,
-		&i.ProcessedName,
 		&i.ProcessedAt,
 	)
 	return i, err
@@ -280,7 +274,7 @@ func (q *Queries) GetImagesStats(ctx context.Context, db DBTX) (GetImagesStatsRo
 }
 
 const getProcessedImage = `-- name: GetProcessedImage :one
-SELECT image_id, width, height, processed_name, processed_at FROM processed_images
+SELECT image_id, width, height, processed_at FROM processed_images
 WHERE image_id = $1 LIMIT 1
 `
 
@@ -291,7 +285,6 @@ func (q *Queries) GetProcessedImage(ctx context.Context, db DBTX, imageID uuid.U
 		&i.ImageID,
 		&i.Width,
 		&i.Height,
-		&i.ProcessedName,
 		&i.ProcessedAt,
 	)
 	return i, err
@@ -302,7 +295,6 @@ SELECT
     i.id, i.original_name, i.file_name, i.status, i.result_url, i.size, i.format, i.uploaded_at,
     p.width,
     p.height,
-    p.processed_name,
     p.processed_at
 FROM images i
          JOIN processed_images p ON i.id = p.image_id
@@ -317,18 +309,17 @@ type GetRecentProcessedImagesParams struct {
 }
 
 type GetRecentProcessedImagesRow struct {
-	ID            uuid.UUID      `json:"id"`
-	OriginalName  string         `json:"original_name"`
-	FileName      string         `json:"file_name"`
-	Status        string         `json:"status"`
-	ResultUrl     sql.NullString `json:"result_url"`
-	Size          int64          `json:"size"`
-	Format        string         `json:"format"`
-	UploadedAt    time.Time      `json:"uploaded_at"`
-	Width         int32          `json:"width"`
-	Height        int32          `json:"height"`
-	ProcessedName string         `json:"processed_name"`
-	ProcessedAt   time.Time      `json:"processed_at"`
+	ID           uuid.UUID      `json:"id"`
+	OriginalName string         `json:"original_name"`
+	FileName     string         `json:"file_name"`
+	Status       string         `json:"status"`
+	ResultUrl    sql.NullString `json:"result_url"`
+	Size         int64          `json:"size"`
+	Format       string         `json:"format"`
+	UploadedAt   time.Time      `json:"uploaded_at"`
+	Width        int32          `json:"width"`
+	Height       int32          `json:"height"`
+	ProcessedAt  time.Time      `json:"processed_at"`
 }
 
 func (q *Queries) GetRecentProcessedImages(ctx context.Context, db DBTX, arg GetRecentProcessedImagesParams) ([]GetRecentProcessedImagesRow, error) {
@@ -351,7 +342,6 @@ func (q *Queries) GetRecentProcessedImages(ctx context.Context, db DBTX, arg Get
 			&i.UploadedAt,
 			&i.Width,
 			&i.Height,
-			&i.ProcessedName,
 			&i.ProcessedAt,
 		); err != nil {
 			return nil, err
@@ -578,18 +568,16 @@ UPDATE processed_images
 SET
     width = $2,
     height = $3,
-    processed_name = $4,
-    processed_at = $5
+    processed_at = $4
 WHERE image_id = $1
-    RETURNING image_id, width, height, processed_name, processed_at
+    RETURNING image_id, width, height, processed_at
 `
 
 type UpdateProcessedImageParams struct {
-	ImageID       uuid.UUID `json:"image_id"`
-	Width         int32     `json:"width"`
-	Height        int32     `json:"height"`
-	ProcessedName string    `json:"processed_name"`
-	ProcessedAt   time.Time `json:"processed_at"`
+	ImageID     uuid.UUID `json:"image_id"`
+	Width       int32     `json:"width"`
+	Height      int32     `json:"height"`
+	ProcessedAt time.Time `json:"processed_at"`
 }
 
 func (q *Queries) UpdateProcessedImage(ctx context.Context, db DBTX, arg UpdateProcessedImageParams) (ProcessedImage, error) {
@@ -597,7 +585,6 @@ func (q *Queries) UpdateProcessedImage(ctx context.Context, db DBTX, arg UpdateP
 		arg.ImageID,
 		arg.Width,
 		arg.Height,
-		arg.ProcessedName,
 		arg.ProcessedAt,
 	)
 	var i ProcessedImage
@@ -605,7 +592,6 @@ func (q *Queries) UpdateProcessedImage(ctx context.Context, db DBTX, arg UpdateP
 		&i.ImageID,
 		&i.Width,
 		&i.Height,
-		&i.ProcessedName,
 		&i.ProcessedAt,
 	)
 	return i, err

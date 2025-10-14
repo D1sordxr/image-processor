@@ -17,14 +17,14 @@ type ImageListParams struct {
 }
 
 type ImageUpdateParams struct {
-	Status    *vo.Status
-	ResultURL *vo.ResultUrl
+	ImageID uuid.UUID
+	Status  vo.Status
 }
 
 type ProcessedImageCreateParams struct {
 	ImageID       uuid.UUID
-	Width         int32
-	Height        int32
+	Width         int
+	Height        int
 	ProcessedName string
 	ProcessedAt   time.Time
 }

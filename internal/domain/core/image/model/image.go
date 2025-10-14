@@ -33,6 +33,7 @@ type ProcessedData struct {
 }
 
 type ProcessingImage struct {
-	ImageID string            `json:"image_id"`
-	Options ProcessingOptions `json:"options"`
+	ImageID   string            `json:"image_id"`
+	Options   ProcessingOptions `json:"options"`
+	Timestamp time.Time         `json:"timestamp"`
 }

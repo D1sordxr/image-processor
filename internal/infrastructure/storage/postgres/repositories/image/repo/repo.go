@@ -22,11 +22,11 @@ func New(executor *executor.Executor) *Repository {
 	}
 }
 
-func (r *Repository) SaveImageMetadata(
+func (r *Repository) Save(
 	ctx context.Context,
 	p options.ImageCreateParams,
 ) (*model.ImageMetadata, error) {
-	const op = "image.Repository.SaveImageMetadata"
+	const op = "image.Repository.Save"
 
 	rawImage, err := r.queries.CreateImage(
 		ctx,
@@ -39,4 +39,38 @@ func (r *Repository) SaveImageMetadata(
 
 	image := converters.ToDomainImage(rawImage)
 	return &image, nil
+}
+
+func (r *Repository) SaveProcessed(
+	ctx context.Context,
+	p options.ProcessedImageCreateParams,
+) error {
+	const op = "image.Repository.SaveProcessed"
+
+	if _, err := r.queries.CreateProcessedImage(
+		ctx,
+		r.executor.GetExecutor(ctx),
+		converters.ToCreateProcessedImageParams(p),
+	); err != nil {
+		return fmt.Errorf("%s:%w", op, err)
+	}
+
+	return nil
+}
+
+func (r *Repository) UpdateStatus(
+	ctx context.Context,
+	p options.ImageUpdateParams,
+) error {
+	const op = "image.Repository.UpdateStatus"
+
+	if _, err := r.queries.UpdateImageStatus(
+		ctx,
+		r.executor.GetExecutor(ctx),
+		converters.ToUpdateImageStatusParams(p),
+	); err != nil {
+		return fmt.Errorf("%s:%w", op, err)
+	}
+
+	return nil
 }

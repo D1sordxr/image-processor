@@ -43,7 +43,9 @@ require (
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.4 // indirect
 	github.com/philhofer/fwd v1.2.0 // indirect
+	github.com/pierrec/lz4/v4 v4.1.22 // indirect
 	github.com/rs/xid v1.6.0 // indirect
+	github.com/segmentio/kafka-go v0.4.49 // indirect
 	github.com/sethvargo/go-retry v0.3.0 // indirect
 	github.com/tinylib/msgp v1.3.0 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect

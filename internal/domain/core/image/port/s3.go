@@ -9,6 +9,7 @@ type S3Repository interface {
 	Save(ctx context.Context, data []byte, filename string) (*model.FileInfo, error)
 	SaveOriginal(ctx context.Context, data []byte, filename string) (*model.FileInfo, error)
 	Get(ctx context.Context, filename string) ([]byte, error)
+	GetOriginal(ctx context.Context, filename string) ([]byte, error)
 	Delete(ctx context.Context, filename string) error
 	DeleteOriginal(ctx context.Context, filename string) error
 	Exists(ctx context.Context, filename string) (bool, error)

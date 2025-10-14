@@ -23,9 +23,8 @@ type Image struct {
 }
 
 type ProcessedImage struct {
-	ImageID       uuid.UUID `json:"image_id"`
-	Width         int32     `json:"width"`
-	Height        int32     `json:"height"`
-	ProcessedName string    `json:"processed_name"`
-	ProcessedAt   time.Time `json:"processed_at"`
+	ImageID     uuid.UUID `json:"image_id"`
+	Width       int32     `json:"width"`
+	Height      int32     `json:"height"`
+	ProcessedAt time.Time `json:"processed_at"`
 }

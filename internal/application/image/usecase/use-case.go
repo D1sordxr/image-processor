@@ -22,15 +22,17 @@ type UseCase struct {
 	repo      port.Repository
 	s3        port.S3Repository
 	queue     port.Queue
+	processor port.ImageProcessor
 	baseURL   sharedVO.BaseURL
 }
 
-func NewUseCase(
+func New(
 	log appPorts.Logger,
 	txManager appPorts.TxManager,
 	repo port.Repository,
 	s3 port.S3Repository,
 	queue port.Queue,
+	processor port.ImageProcessor,
 	baseURL sharedVO.BaseURL,
 
 ) *UseCase {
@@ -40,6 +42,7 @@ func NewUseCase(
 		repo:      repo,
 		s3:        s3,
 		queue:     queue,
+		processor: processor,
 		baseURL:   baseURL,
 	}
 }
@@ -65,8 +68,7 @@ func (uc *UseCase) UploadImage(ctx context.Context, in input.UploadImageInput) (
 	var imageMetadata *model.ImageMetadata
 	txErr := uc.txManager.WithTransaction(ctx, nil, func(ctx context.Context) error {
 		var innerErr error
-
-		imageMetadata, innerErr = uc.repo.SaveImageMetadata(ctx, options.ImageCreateParams{
+		imageMetadata, innerErr = uc.repo.Save(ctx, options.ImageCreateParams{
 			ID:           imageID,
 			OriginalName: in.Filename,
 			FileName:     filename,
@@ -82,8 +84,9 @@ func (uc *UseCase) UploadImage(ctx context.Context, in input.UploadImageInput) (
 		}
 
 		if innerErr = uc.queue.PublishImageTask(ctx, &model.ProcessingImage{
-			ImageID: imageID.String(),
-			Options: in.Options,
+			ImageID:   imageID.String(),
+			Options:   in.Options,
+			Timestamp: time.Now(),
 		}); innerErr != nil {
 			uc.log.Error("Failed to publish image task", logFields("error", innerErr)...)
 			return fmt.Errorf("publish image task: %w", innerErr)
@@ -116,6 +119,73 @@ func (uc *UseCase) UploadImage(ctx context.Context, in input.UploadImageInput) (
 		Status:    imageMetadata.Status.String(),
 		ResultURL: imageMetadata.ResultURL.String(),
 	}, nil
+}
+
+func (uc *UseCase) ProcessImage(ctx context.Context, image *model.ProcessingImage) error {
+	const op = "image.UseCase.ProcessImage"
+	logFields := logger.WithFields("operation", op, "image_id", image.ImageID)
+
+	uc.log.Info("Processing image", logFields()...)
+
+	imageUUID, err := uuid.Parse(image.ImageID)
+	if err != nil {
+		uc.log.Error("Failed to parse image UUID", logFields("image_id", image.ImageID)...)
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
+	data, err := uc.s3.GetOriginal(ctx, imageUUID.String())
+	if err != nil {
+		uc.log.Error("Failed to get original image from S3", logFields("error", err)...)
+		return fmt.Errorf("%s: get original: %w", op, err)
+	}
+
+	result, err := uc.processor.ProcessImage(data, image.Options)
+	if err != nil {
+		uc.log.Error("Failed to process image", logFields("error", err)...)
+		return fmt.Errorf("%s: process image: %w", op, err)
+	}
+
+	if _, err = uc.s3.Save(ctx, result.ProcessedData, imageUUID.String()); err != nil {
+		uc.log.Error("Failed to save processed image", logFields("error", err)...)
+		return fmt.Errorf("%s: save processed: %w", op, err)
+	}
+
+	defer func() {
+		if err != nil {
+			if innerErr := uc.repo.UpdateStatus(ctx, options.ImageUpdateParams{
+				ImageID: imageUUID,
+				Status:  vo.StatusFailed,
+			}); innerErr != nil {
+				uc.log.Error("Failed to update image status", logFields("error", innerErr)...)
+			}
+		}
+	}()
+
+	if err = uc.txManager.WithTransaction(ctx, nil, func(ctx context.Context) error {
+		if err = uc.repo.UpdateStatus(ctx, options.ImageUpdateParams{
+			ImageID: imageUUID,
+			Status:  vo.StatusCompleted,
+		}); err != nil {
+			return fmt.Errorf("update status: %w", err)
+		}
+
+		if err = uc.repo.SaveProcessed(ctx, options.ProcessedImageCreateParams{
+			ImageID:     imageUUID,
+			Width:       result.Width,
+			Height:      result.Height,
+			ProcessedAt: time.Now(),
+		}); err != nil {
+			return fmt.Errorf("save processed data: %w", err)
+		}
+
+		return nil
+	}); err != nil {
+		uc.log.Error("Failed to update image metadata", logFields("error", err)...)
+		return fmt.Errorf("%s: update metadata: %w", op, err)
+	}
+
+	uc.log.Info("Successfully processed image", logFields()...)
+	return nil
 }
 
 func (uc *UseCase) GetImage(ctx context.Context, in input.GetImageInput) (*output.GetImageOutput, error) {
