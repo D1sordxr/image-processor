@@ -3,11 +3,12 @@ package postgres
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/D1sordxr/image-processor/internal/domain/app/port"
 	"github.com/D1sordxr/image-processor/internal/domain/core/image/options"
 	"github.com/D1sordxr/image-processor/internal/infrastructure/config"
 	"github.com/wb-go/wbf/dbpg"
-	"time"
 )
 
 func NewRunFunc(log port.Logger, db *dbpg.DB, cfg config.Postgres) port.RunFunc {

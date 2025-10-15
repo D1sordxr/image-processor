@@ -1,7 +1,5 @@
 package minio
 
-import "time"
-
 const (
 	policy = `{
 			"Version": "2012-10-17",

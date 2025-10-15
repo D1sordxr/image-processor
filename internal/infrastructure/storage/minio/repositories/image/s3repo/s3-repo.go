@@ -4,14 +4,15 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io"
+	"mime"
+	"path/filepath"
+
 	"github.com/D1sordxr/image-processor/internal/domain/core/image/model"
 	"github.com/D1sordxr/image-processor/internal/domain/core/image/options"
 	"github.com/D1sordxr/image-processor/internal/domain/core/image/vo"
 	minioRoot "github.com/D1sordxr/image-processor/internal/infrastructure/storage/minio"
 	"github.com/minio/minio-go/v7"
-	"io"
-	"mime"
-	"path/filepath"
 )
 
 type S3Repository struct {

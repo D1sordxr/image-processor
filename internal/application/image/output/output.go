@@ -12,7 +12,6 @@ type UploadImageOutput struct {
 type GetImageOutput struct {
 	ImageData []byte               `json:"image_data,omitempty"`
 	Metadata  *model.ImageMetadata `json:"metadata"`
-	ImageURL  string               `json:"image_url"`
 }
 
 type GetImageStatusOutput struct {

@@ -23,7 +23,7 @@ func ToDomainImage(dbImage gen.Image) model.ImageMetadata {
 	}
 }
 
-func ToDomainImageWithProcessedData(row gen.GetImageWithProcessedDataRow) (*model.ImageMetadata, error) {
+func ToDomainImageWithProcessedData(row gen.GetImageWithProcessedDataRow) model.ImageMetadata {
 	image := ToDomainImage(gen.Image{
 		ID:           row.ID,
 		OriginalName: row.OriginalName,
@@ -35,14 +35,13 @@ func ToDomainImageWithProcessedData(row gen.GetImageWithProcessedDataRow) (*mode
 		UploadedAt:   row.UploadedAt,
 	})
 
-	if row.Width.Valid && row.Height.Valid && row.ProcessedName.Valid && row.ProcessedAt.Valid {
+	if row.Width.Valid && row.Height.Valid && row.ProcessedAt.Valid {
 		image.ProcessedData = &model.ProcessedData{
-			Width:         int(row.Width.Int32),
-			Height:        int(row.Height.Int32),
-			ProcessedName: row.ProcessedName.String,
-			ProcessedAt:   row.ProcessedAt.Time,
+			Width:       int(row.Width.Int32),
+			Height:      int(row.Height.Int32),
+			ProcessedAt: row.ProcessedAt.Time,
 		}
 	}
 
-	return image, nil
+	return image
 }

@@ -13,34 +13,6 @@ import (
 	"github.com/google/uuid"
 )
 
-const countImagesWithFilters = `-- name: CountImagesWithFilters :one
-SELECT COUNT(*) FROM images
-WHERE
-    ($1::VARCHAR IS NULL OR status = $1) AND
-    ($2::VARCHAR IS NULL OR format = $2) AND
-    ($3::TIMESTAMP IS NULL OR uploaded_at >= $3) AND
-    ($4::TIMESTAMP IS NULL OR uploaded_at <= $4)
-`
-
-type CountImagesWithFiltersParams struct {
-	Status   sql.NullString `json:"status"`
-	Format   sql.NullString `json:"format"`
-	FromDate sql.NullTime   `json:"from_date"`
-	ToDate   sql.NullTime   `json:"to_date"`
-}
-
-func (q *Queries) CountImagesWithFilters(ctx context.Context, db DBTX, arg CountImagesWithFiltersParams) (int64, error) {
-	row := db.QueryRowContext(ctx, countImagesWithFilters,
-		arg.Status,
-		arg.Format,
-		arg.FromDate,
-		arg.ToDate,
-	)
-	var count int64
-	err := row.Scan(&count)
-	return count, err
-}
-
 const createImage = `-- name: CreateImage :one
 INSERT INTO images (
     id, original_name, file_name, status, result_url, size, format, uploaded_at

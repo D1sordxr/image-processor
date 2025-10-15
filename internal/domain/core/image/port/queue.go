@@ -2,6 +2,7 @@ package port
 
 import (
 	"context"
+
 	"github.com/D1sordxr/image-processor/internal/domain/core/image/model"
 )
 

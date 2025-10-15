@@ -59,14 +59,6 @@ WHERE
 ORDER BY uploaded_at DESC
     LIMIT sqlc.narg('limit') OFFSET sqlc.narg('offset');
 
--- name: CountImagesWithFilters :one
-SELECT COUNT(*) FROM images
-WHERE
-    (sqlc.narg('status')::VARCHAR IS NULL OR status = sqlc.narg('status')) AND
-    (sqlc.narg('format')::VARCHAR IS NULL OR format = sqlc.narg('format')) AND
-    (sqlc.narg('from_date')::TIMESTAMP IS NULL OR uploaded_at >= sqlc.narg('from_date')) AND
-    (sqlc.narg('to_date')::TIMESTAMP IS NULL OR uploaded_at <= sqlc.narg('to_date'));
-
 -- name: GetImagesByFileName :many
 SELECT * FROM images
 WHERE file_name = $1

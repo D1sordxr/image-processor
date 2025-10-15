@@ -4,8 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/D1sordxr/image-processor/internal/domain/app/port"
 	"time"
+
+	"github.com/D1sordxr/image-processor/internal/domain/app/port"
 
 	"golang.org/x/sync/errgroup"
 )

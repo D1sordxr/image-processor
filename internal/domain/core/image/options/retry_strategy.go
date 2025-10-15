@@ -1,8 +1,9 @@
 package options
 
 import (
-	"github.com/wb-go/wbf/retry"
 	"time"
+
+	"github.com/wb-go/wbf/retry"
 )
 
 type RetryStrategy = retry.Strategy

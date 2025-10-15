@@ -3,6 +3,7 @@ package consumer
 import (
 	"context"
 	"encoding/json"
+
 	appPorts "github.com/D1sordxr/image-processor/internal/domain/app/port"
 	"github.com/D1sordxr/image-processor/internal/domain/core/image/model"
 	"github.com/D1sordxr/image-processor/internal/domain/core/image/options"

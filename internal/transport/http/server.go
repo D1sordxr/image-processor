@@ -3,9 +3,11 @@ package http
 import (
 	"context"
 	"errors"
-	"github.com/D1sordxr/image-processor/internal/domain/app/port"
+	"github.com/D1sordxr/image-processor/internal/transport/http/setup"
 	"net/http"
 	"time"
+
+	"github.com/D1sordxr/image-processor/internal/domain/app/port"
 
 	"github.com/D1sordxr/image-processor/internal/infrastructure/config"
 	"github.com/D1sordxr/image-processor/internal/transport/http/middleware"
@@ -31,7 +33,7 @@ func NewServer(
 ) *Server {
 	log.Info("Initializing HTTP server", "port", config.Port)
 
-	engine := ginext.New()
+	engine := ginext.New(setup.ReleaseMode)
 	engine.Use(middleware.Logger())
 	engine.Use(middleware.Recovery())
 

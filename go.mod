@@ -12,8 +12,10 @@ require (
 	github.com/minio/minio-go/v7 v7.0.95
 	github.com/pressly/goose/v3 v3.26.0
 	github.com/rs/zerolog v1.30.0
+	github.com/segmentio/kafka-go v0.4.49
 	github.com/wb-go/wbf v0.0.7
-	golang.org/x/sync v0.16.0
+	golang.org/x/image v0.32.0
+	golang.org/x/sync v0.17.0
 )
 
 require (
@@ -45,7 +47,6 @@ require (
 	github.com/philhofer/fwd v1.2.0 // indirect
 	github.com/pierrec/lz4/v4 v4.1.22 // indirect
 	github.com/rs/xid v1.6.0 // indirect
-	github.com/segmentio/kafka-go v0.4.49 // indirect
 	github.com/sethvargo/go-retry v0.3.0 // indirect
 	github.com/tinylib/msgp v1.3.0 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
@@ -55,7 +56,7 @@ require (
 	golang.org/x/crypto v0.40.0 // indirect
 	golang.org/x/net v0.42.0 // indirect
 	golang.org/x/sys v0.34.0 // indirect
-	golang.org/x/text v0.27.0 // indirect
+	golang.org/x/text v0.30.0 // indirect
 	google.golang.org/protobuf v1.36.6 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	olympos.io/encoding/edn v0.0.0-20201019073823-d3554ca0b0a3 // indirect

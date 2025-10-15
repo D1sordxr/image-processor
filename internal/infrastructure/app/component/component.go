@@ -2,6 +2,7 @@ package component
 
 import (
 	"context"
+
 	"github.com/D1sordxr/image-processor/internal/domain/app/port"
 )
 

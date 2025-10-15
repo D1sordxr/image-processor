@@ -2,8 +2,9 @@ package vo
 
 import (
 	"fmt"
-	"github.com/D1sordxr/image-processor/internal/domain/core/shared/vo"
 	"strings"
+
+	"github.com/D1sordxr/image-processor/internal/domain/core/shared/vo"
 )
 
 type ResultUrl string

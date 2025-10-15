@@ -4,12 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
+
 	appPorts "github.com/D1sordxr/image-processor/internal/domain/app/port"
 	"github.com/D1sordxr/image-processor/internal/domain/core/image/model"
 	"github.com/D1sordxr/image-processor/internal/domain/core/image/options"
 	"github.com/D1sordxr/image-processor/pkg/logger"
 	wbfKafka "github.com/wb-go/wbf/kafka"
-	"time"
 )
 
 type Queue struct {

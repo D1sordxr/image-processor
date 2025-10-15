@@ -3,9 +3,10 @@ package minio
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/D1sordxr/image-processor/internal/infrastructure/config"
 	"github.com/minio/minio-go/v7"
-	"time"
 
 	"github.com/minio/minio-go/v7/pkg/credentials"
 )

@@ -2,7 +2,32 @@ package dto
 
 import (
 	"github.com/D1sordxr/image-processor/internal/domain/core/image/model"
+	"github.com/D1sordxr/image-processor/internal/domain/core/shared/validator"
 )
+
+type UploadRequest struct {
+	Width         int    `form:"width" validate:"min=0"`
+	Height        int    `form:"height" validate:"min=0"`
+	Quality       int    `form:"quality" validate:"min=1,max=100"`
+	Format        string `form:"format" validate:"oneof=jpeg jpg png gif"`
+	WatermarkText string `form:"watermark"`
+	Thumbnail     bool   `form:"thumbnail"`
+}
+
+func (r *UploadRequest) Validate() error {
+	return validator.ValidateStruct(r)
+}
+
+func (r *UploadRequest) ToProcessingOptions() model.ProcessingOptions {
+	return model.ProcessingOptions{
+		Width:         r.Width,
+		Height:        r.Height,
+		Quality:       r.Quality,
+		Format:        r.Format,
+		WatermarkText: r.WatermarkText,
+		Thumbnail:     r.Thumbnail,
+	}
+}
 
 type ErrorResponse struct {
 	Error   string `json:"error"`

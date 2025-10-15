@@ -1,9 +1,10 @@
 package model
 
 import (
+	"time"
+
 	"github.com/D1sordxr/image-processor/internal/domain/core/image/vo"
 	"github.com/google/uuid"
-	"time"
 )
 
 type FileInfo struct {
