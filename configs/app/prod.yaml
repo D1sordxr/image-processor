@@ -1,3 +1,10 @@
+server:
+  address: "0.0.0.0"
+  port: "8080"
+  timeout: "30s"
+  idle_timeout: "120s"
+  cors: true
+
 storage:
   host: "postgres"
   port: 5432
@@ -7,21 +14,18 @@ storage:
   migrations: true
   ssl_mode: "disable"
 
-server:
-  address: "0.0.0.0"
-  port: "8080"
-  timeout: "30s"
-  idle_timeout: "120s"
-  cors: true
-  # allow_origins : "*"
-
-message_broker:
-  address: "kafka:9093"
-  image_topic: "image"
+broker:
+  address: "kafka:9092"
+  image_topic: "image-processing-tasks"
   processor_group: "processor-group"
-  broadcaster_group: "broadcaster-group"
   create_topic: true
   session_timeout: "30s"
   max_poll_interval: "5m"
 
-s3
+s3_storage:
+  endpoint: "minio:9000"
+  access_key: "minioadmin"
+  secret_key: "minioadmin"
+  use_ssl: false
+  bucket_name: "images"
+  region: "us-east-1"

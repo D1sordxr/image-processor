@@ -40,11 +40,7 @@ func (c *Consumer) StartProcessing(
 	c.log.Info("Starting Kafka consumer", logFields("topic", c.topic)...)
 
 	messages := make(chan kafka.Message, 128)
-
-	go func() {
-		defer close(messages)
-		c.consumer.StartConsuming(ctx, messages, options.BrokerStrategy)
-	}()
+	c.consumer.StartConsuming(ctx, messages, options.BrokerStrategy)
 
 	for {
 		select {

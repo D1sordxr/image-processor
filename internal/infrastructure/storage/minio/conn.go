@@ -21,42 +21,41 @@ type Connection struct {
 }
 
 func New(cfg config.Minio) *Connection {
+	client, err := minio.New(cfg.Endpoint, &minio.Options{
+		Creds:  credentials.NewStaticV4(cfg.AccessKey, cfg.SecretKey, ""),
+		Secure: cfg.UseSSL,
+		Region: cfg.Region,
+	})
+	if err != nil {
+		panic("failed to connect to minio")
+	}
+
 	return &Connection{
 		cfg:     &cfg,
-		Storage: nil,
+		Storage: client,
 	}
 }
 
 func (c *Connection) Run(ctx context.Context) error {
 	const op = "minio.Connection.Run"
 
-	client, err := minio.New(c.cfg.Endpoint, &minio.Options{
-		Creds:  credentials.NewStaticV4(c.cfg.AccessKey, c.cfg.SecretKey, ""),
-		Secure: c.cfg.UseSSL,
-		Region: c.cfg.Region,
-	})
-	if err != nil {
-		return fmt.Errorf("%s: %w", op, err)
-	}
-	c.Storage = client
-
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	exists, err := client.BucketExists(ctx, c.cfg.BucketName)
+	exists, err := c.Storage.BucketExists(ctx, c.cfg.BucketName)
 	if err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
 
 	if !exists {
-		err = client.MakeBucket(ctx, c.cfg.BucketName, minio.MakeBucketOptions{
+		err = c.Storage.MakeBucket(ctx, c.cfg.BucketName, minio.MakeBucketOptions{
 			Region: c.cfg.Region,
 		})
 		if err != nil {
 			return fmt.Errorf("%s: %w", op, err)
 		}
 
-		err = client.SetBucketPolicy(ctx, c.cfg.BucketName, fmt.Sprintf(policy, c.cfg.BucketName))
+		err = c.Storage.SetBucketPolicy(ctx, c.cfg.BucketName, fmt.Sprintf(policy, c.cfg.BucketName))
 		if err != nil {
 			return fmt.Errorf("%s: %w", op, err)
 		}

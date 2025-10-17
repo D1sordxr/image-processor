@@ -37,6 +37,7 @@ func main() {
 
 	cfg := config.NewAppConfig()
 	log := logger.New(defaultLogger)
+	log.Debug("Application data", "config", cfg)
 
 	storageConn := postgres.New(cfg.Storage)
 	s3Conn := minio.New(cfg.S3Storage)
@@ -74,11 +75,11 @@ func main() {
 
 	app := loadApp.NewApp(
 		log,
+		brokerConn,
 		storageConn,
 		s3Conn,
-		brokerConn,
-		worker,
 		httpServer,
+		worker,
 	)
 	app.Run(ctx)
 }

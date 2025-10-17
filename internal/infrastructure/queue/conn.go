@@ -16,18 +16,33 @@ import (
 type Connection struct {
 	cfg  *config.Kafka
 	conn *kafka.Conn
-	*wbfKafka.Producer
+
+	*wbfKafka.Producer // TODO: move to ./image/... to move topic creation into run func
 	*wbfKafka.Consumer
+
 	isClosed atomic.Bool
 }
 
 func New(cfg config.Kafka) *Connection {
-	return &Connection{
-		cfg:      &cfg,
-		Producer: nil,
-		Consumer: nil,
-		isClosed: atomic.Bool{},
+	conn, err := kafka.Dial("tcp", cfg.Address)
+	if err != nil {
+		panic("failed to connect to kafka")
 	}
+	connection := &Connection{
+		cfg:  &cfg,
+		conn: conn,
+	}
+
+	if cfg.CreateTopic {
+		if err = connection.createTopic(); err != nil {
+			panic("failed to create topic")
+		}
+	}
+
+	connection.Producer = wbfKafka.NewProducer(cfg.PrepWbfProducer())
+	connection.Consumer = wbfKafka.NewConsumer(cfg.PrepWbfConsumer())
+
+	return connection
 }
 
 const (
@@ -61,21 +76,6 @@ func (w *Connection) healthCheck() error {
 func (w *Connection) Run(ctx context.Context) error {
 	const op = "kafka.Connection.Run"
 
-	conn, err := kafka.Dial("tcp", w.cfg.Address)
-	if err != nil {
-		return fmt.Errorf("%s: %w", op, err)
-	}
-
-	w.conn = conn
-	w.Producer = wbfKafka.NewProducer(w.cfg.PrepWbfProducer())
-	w.Consumer = wbfKafka.NewConsumer(w.cfg.PrepWbfConsumer())
-
-	if w.cfg.CreateTopic {
-		if err = w.createTopic(); err != nil {
-			return fmt.Errorf("%s: %w", op, err)
-		}
-	}
-
 	healthTicker := ticker.NewHealth()
 	defer healthTicker.Stop()
 
@@ -84,7 +84,7 @@ func (w *Connection) Run(ctx context.Context) error {
 		case <-ctx.Done():
 			return nil
 		case <-healthTicker.C:
-			if err = w.healthCheck(); err != nil {
+			if err := w.healthCheck(); err != nil {
 				return fmt.Errorf("%s: %w", op, err)
 			}
 		}

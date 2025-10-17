@@ -6,7 +6,7 @@ import (
 )
 
 type Kafka struct {
-	Address         string        `yaml:"address" env:"KAFKA_ADDRESS"`
+	Address         string      `yaml:"address" env:"KAFKA_ADDRESS"`
 	ImageTopic      string        `yaml:"image_topic" env:"KAFKA_ORDERS_TOPIC"`
 	ProcessorGroup  string        `yaml:"processor_group" env:"KAFKA_SAVER_GROUP"`
 	CreateTopic     bool          `yaml:"create_topic" env:"KAFKA_CREATE_TOPIC"`

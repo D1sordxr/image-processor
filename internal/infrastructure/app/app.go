@@ -7,23 +7,16 @@ import (
 	"time"
 
 	"github.com/D1sordxr/image-processor/internal/domain/app/port"
-
-	"golang.org/x/sync/errgroup"
 )
-
-type component interface {
-	Run(ctx context.Context) error
-	Shutdown(ctx context.Context) error
-}
 
 type App struct {
 	log        port.Logger
-	components []component
+	components []port.Component
 }
 
 func NewApp(
 	log port.Logger,
-	components ...component,
+	components ...port.Component,
 ) *App {
 	return &App{
 		log:        log,
@@ -35,22 +28,38 @@ func (a *App) Run(ctx context.Context) {
 	defer a.shutdown()
 
 	errChan := make(chan error)
-	errGroup, ctx := errgroup.WithContext(ctx)
-	go func() { errChan <- errGroup.Wait() }()
+	for i, c := range a.components {
+		func(idx int, component port.Component) {
+			var (
+				startCtx, startCancel = context.WithTimeout(ctx, 5*time.Second)
+				startErrChan          = make(chan error, 1)
+				startErr              error
+			)
+			defer startCancel()
+			defer close(startErrChan)
 
-	for i, comp := range a.components {
-		c := comp
-		idx := i
-		errGroup.Go(func() error {
-			a.log.Info("Starting component", "idx", idx, "type", fmt.Sprintf("%T", c))
-			err := c.Run(ctx)
-			if err != nil {
-				a.log.Error("Component failed", "idx", idx, "type", fmt.Sprintf("%T", c), "error", err.Error())
-			} else {
-				a.log.Info("Component stopped", "idx", idx, "type", fmt.Sprintf("%T", c))
+			go func() {
+				a.log.Info("Starting Component",
+					"idx", idx,
+					"type", fmt.Sprintf("%T", c),
+				)
+				if startErr = c.Run(ctx); startErr != nil {
+					a.log.Error("Component failed",
+						"idx", idx,
+						"type", fmt.Sprintf("%T", c),
+						"error", startErr.Error(),
+					)
+					startErrChan <- startErr
+				}
+			}()
+
+			select {
+			case err := <-startErrChan:
+				errChan <- err
+				break
+			case <-startCtx.Done():
 			}
-			return err
-		})
+		}(i, c)
 	}
 
 	select {
@@ -69,7 +78,7 @@ func (a *App) shutdown() {
 
 	errs := make([]error, 0, len(a.components))
 	for i := len(a.components) - 1; i >= 0; i-- {
-		a.log.Info("Shutting down component", "idx", i)
+		a.log.Info("Shutting down Component", "idx", i)
 		if err := a.components[i].Shutdown(shutdownCtx); err != nil {
 			errs = append(errs, err)
 		}

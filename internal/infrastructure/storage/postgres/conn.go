@@ -15,22 +15,20 @@ type Connection struct {
 }
 
 func New(cfg config.Postgres) *Connection {
+	db, err := dbpg.New(cfg.ConnectionString(), nil, nil)
+	if err != nil {
+		panic("failed to connect to database")
+	}
 	return &Connection{
 		cfg:     &cfg,
-		Storage: nil,
+		Storage: db,
 	}
 }
 
 func (c *Connection) Run(ctx context.Context) error {
 	const op = "postgres.Connection.Run"
 
-	db, err := dbpg.New(c.cfg.ConnectionString(), nil, nil)
-	if err != nil {
-		return fmt.Errorf("%s: %w", op, err)
-	}
-	c.Storage = db
-
-	if err = SetupStorage(c.Storage.Master, c.cfg); err != nil {
+	if err := SetupStorage(c.Storage.Master, c.cfg); err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
 
@@ -42,7 +40,7 @@ func (c *Connection) Run(ctx context.Context) error {
 		case <-ctx.Done():
 			return nil
 		case <-healthTicker.C:
-			if err = c.Storage.Master.Ping(); err != nil {
+			if err := c.Storage.Master.Ping(); err != nil {
 				return fmt.Errorf("%s: %w", op, err)
 			}
 		}
