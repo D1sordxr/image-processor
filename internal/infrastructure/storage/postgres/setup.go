@@ -8,7 +8,7 @@ import (
 	"github.com/pressly/goose/v3"
 )
 
-func SetupStorage(db *sql.DB, cfg config.Postgres) error {
+func SetupStorage(db *sql.DB, cfg *config.Postgres) error {
 	if cfg.Migrations {
 		goose.SetBaseFS(embedMigrations)
 		if err := goose.SetDialect("postgres"); err != nil {

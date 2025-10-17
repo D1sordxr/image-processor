@@ -38,12 +38,12 @@ const (
 )
 
 type Handler struct {
-	uc      port.UseCase
 	log     appPorts.Logger
+	uc      port.UseCase
 	baseURL string
 }
 
-func New(uc port.UseCase, log appPorts.Logger, baseURL sharedVO.BaseURL) *Handler {
+func New(log appPorts.Logger, uc port.UseCase, baseURL sharedVO.BaseURL) *Handler {
 	return &Handler{
 		uc:      uc,
 		log:     log,

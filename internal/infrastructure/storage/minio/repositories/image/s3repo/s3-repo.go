@@ -16,11 +16,11 @@ import (
 )
 
 type S3Repository struct {
-	storage    *minioRoot.Storage
+	storage    *minioRoot.Connection
 	bucketName string
 }
 
-func New(storage *minioRoot.Storage, bucketName string) *S3Repository {
+func New(storage *minioRoot.Connection, bucketName string) *S3Repository {
 	return &S3Repository{
 		storage:    storage,
 		bucketName: bucketName,
@@ -35,7 +35,7 @@ func (s3 *S3Repository) Save(ctx context.Context, data []byte, filename string) 
 	}
 
 	reader := bytes.NewReader(data)
-	info, err := s3.storage.Client.PutObject(ctx, s3.bucketName, filename, reader, int64(len(data)), minio.PutObjectOptions{
+	info, err := s3.storage.Storage.PutObject(ctx, s3.bucketName, filename, reader, int64(len(data)), minio.PutObjectOptions{
 		ContentType: mimeType,
 	})
 	if err != nil {
@@ -58,7 +58,7 @@ func (s3 *S3Repository) SaveOriginal(ctx context.Context, data []byte, filename 
 	}
 
 	reader := bytes.NewReader(data)
-	info, err := s3.storage.Client.PutObject(
+	info, err := s3.storage.Storage.PutObject(
 		ctx,
 		s3.bucketName,
 		vo.NewFilenameOriginal(filename).String(),
@@ -81,7 +81,7 @@ func (s3 *S3Repository) SaveOriginal(ctx context.Context, data []byte, filename 
 }
 
 func (s3 *S3Repository) Get(ctx context.Context, filename string) ([]byte, error) {
-	object, err := s3.storage.Client.GetObject(ctx, s3.bucketName, filename, minio.GetObjectOptions{})
+	object, err := s3.storage.Storage.GetObject(ctx, s3.bucketName, filename, minio.GetObjectOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get object: %w", err)
 	}
@@ -96,7 +96,7 @@ func (s3 *S3Repository) Get(ctx context.Context, filename string) ([]byte, error
 }
 
 func (s3 *S3Repository) GetOriginal(ctx context.Context, filename string) ([]byte, error) {
-	object, err := s3.storage.Client.GetObject(
+	object, err := s3.storage.Storage.GetObject(
 		ctx,
 		s3.bucketName,
 		vo.NewFilenameOriginal(filename).String(),
@@ -116,7 +116,7 @@ func (s3 *S3Repository) GetOriginal(ctx context.Context, filename string) ([]byt
 }
 
 func (s3 *S3Repository) Delete(ctx context.Context, filename string) error {
-	err := s3.storage.Client.RemoveObject(ctx, s3.bucketName, filename, minio.RemoveObjectOptions{})
+	err := s3.storage.Storage.RemoveObject(ctx, s3.bucketName, filename, minio.RemoveObjectOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to delete object: %w", err)
 	}
@@ -124,7 +124,7 @@ func (s3 *S3Repository) Delete(ctx context.Context, filename string) error {
 }
 
 func (s3 *S3Repository) DeleteOriginal(ctx context.Context, filename string) error {
-	if err := s3.storage.Client.RemoveObject(
+	if err := s3.storage.Storage.RemoveObject(
 		ctx,
 		s3.bucketName,
 		vo.NewFilenameOriginal(filename).String(),
@@ -136,7 +136,7 @@ func (s3 *S3Repository) DeleteOriginal(ctx context.Context, filename string) err
 }
 
 func (s3 *S3Repository) Exists(ctx context.Context, filename string) (bool, error) {
-	_, err := s3.storage.Client.StatObject(ctx, s3.bucketName, filename, minio.StatObjectOptions{})
+	_, err := s3.storage.Storage.StatObject(ctx, s3.bucketName, filename, minio.StatObjectOptions{})
 	if err != nil {
 		if minio.ToErrorResponse(err).Code == "NoSuchKey" {
 			return false, nil
@@ -147,7 +147,7 @@ func (s3 *S3Repository) Exists(ctx context.Context, filename string) (bool, erro
 }
 
 func (s3 *S3Repository) GetURL(ctx context.Context, filename string) (string, error) {
-	url, err := s3.storage.Client.PresignedGetObject(ctx, s3.bucketName, filename, options.S3PresignedDuration, nil)
+	url, err := s3.storage.Storage.PresignedGetObject(ctx, s3.bucketName, filename, options.S3PresignedDuration, nil)
 	if err != nil {
 		return "", fmt.Errorf("failed to generate presigned URL: %w", err)
 	}
@@ -155,7 +155,7 @@ func (s3 *S3Repository) GetURL(ctx context.Context, filename string) (string, er
 }
 
 func (s3 *S3Repository) GetFileInfo(ctx context.Context, filename string) (*model.FileInfo, error) {
-	info, err := s3.storage.Client.StatObject(ctx, s3.bucketName, filename, minio.StatObjectOptions{})
+	info, err := s3.storage.Storage.StatObject(ctx, s3.bucketName, filename, minio.StatObjectOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get object info: %w", err)
 	}
@@ -180,7 +180,7 @@ func (s3 *S3Repository) GetFileInfo(ctx context.Context, filename string) (*mode
 func (s3 *S3Repository) ListFiles(ctx context.Context, prefix string) ([]model.FileInfo, error) {
 	var files []model.FileInfo
 
-	objectCh := s3.storage.Client.ListObjects(ctx, s3.bucketName, minio.ListObjectsOptions{
+	objectCh := s3.storage.Storage.ListObjects(ctx, s3.bucketName, minio.ListObjectsOptions{
 		Prefix:    prefix,
 		Recursive: true,
 	})
@@ -202,7 +202,7 @@ func (s3 *S3Repository) ListFiles(ctx context.Context, prefix string) ([]model.F
 
 func (s3 *S3Repository) CreateFolder(ctx context.Context, path string) error {
 	folderPath := path + "/"
-	_, err := s3.storage.Client.PutObject(ctx, s3.bucketName, folderPath, bytes.NewReader([]byte{}), 0, minio.PutObjectOptions{})
+	_, err := s3.storage.Storage.PutObject(ctx, s3.bucketName, folderPath, bytes.NewReader([]byte{}), 0, minio.PutObjectOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to create folder: %w", err)
 	}

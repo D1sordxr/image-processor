@@ -7,7 +7,7 @@ import (
 )
 
 type Queue interface {
-	PublishImageTask(ctx context.Context, task *model.ProcessingImage) error
+	Publish(ctx context.Context, task *model.ProcessingImage) error
 }
 
 type Consumer interface {

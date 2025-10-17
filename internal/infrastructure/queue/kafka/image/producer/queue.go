@@ -1,10 +1,9 @@
-package queue
+package producer
 
 import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"time"
 
 	appPorts "github.com/D1sordxr/image-processor/internal/domain/app/port"
 	"github.com/D1sordxr/image-processor/internal/domain/core/image/model"
@@ -13,7 +12,7 @@ import (
 	wbfKafka "github.com/wb-go/wbf/kafka"
 )
 
-type Queue struct {
+type Producer struct {
 	log      appPorts.Logger
 	producer *wbfKafka.Producer
 	topic    string
@@ -23,46 +22,41 @@ func New(
 	log appPorts.Logger,
 	producer *wbfKafka.Producer,
 	topic string,
-) *Queue {
-	return &Queue{
+) *Producer {
+	return &Producer{
 		log:      log,
 		producer: producer,
 		topic:    topic,
 	}
 }
 
-func (q *Queue) PublishImageTask(ctx context.Context, imageID string) error {
-	const op = "image.Queue.PublishImageTask"
-	logFields := logger.WithFields("operation", op, "image_id", imageID)
-
-	message := model.ProcessingImage{
-		ImageID:   imageID,
-		Timestamp: time.Now(),
-	}
+func (p *Producer) Publish(ctx context.Context, message *model.ProcessingImage) error {
+	const op = "image.Producer.Publish"
+	logFields := logger.WithFields("operation", op, "image_id", message.ImageID)
 
 	messageBytes, err := json.Marshal(message)
 	if err != nil {
-		q.log.Error("Failed to marshal message", logFields("error", err)...)
+		p.log.Error("Failed to marshal message", logFields("error", err)...)
 		return fmt.Errorf("%s: failed to marshal message: %w", op, err)
 	}
 
-	err = q.producer.SendWithRetry(ctx, options.BrokerStrategy, []byte(imageID), messageBytes)
+	err = p.producer.SendWithRetry(ctx, options.BrokerStrategy, []byte(message.ImageID), messageBytes)
 	if err != nil {
-		q.log.Error("Failed to publish task to Kafka", logFields("error", err)...)
+		p.log.Error("Failed to publish task to Kafka", logFields("error", err)...)
 		return fmt.Errorf("%s: failed to publish task to Kafka: %w", op, err)
 	}
 
-	q.log.Info("Image task published to Kafka", logFields(
-		"topic", q.topic,
+	p.log.Info("Image task published to Kafka", logFields(
+		"topic", p.topic,
 	)...)
 
 	return nil
 }
 
-func (q *Queue) Close() error {
-	const op = "image.Queue.Close"
+func (p *Producer) Close() error {
+	const op = "image.Producer.Close"
 
-	if err := q.producer.Close(); err != nil {
+	if err := p.producer.Close(); err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
 

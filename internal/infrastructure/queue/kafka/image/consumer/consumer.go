@@ -34,7 +34,7 @@ func (c *Consumer) StartProcessing(
 	ctx context.Context,
 	processor func(context.Context, *model.ProcessingImage) error,
 ) error {
-	const op = "Consumer.StartProcessing"
+	const op = "image.Consumer.StartProcessing"
 	logFields := logger.WithFields("operation", op)
 
 	c.log.Info("Starting Kafka consumer", logFields("topic", c.topic)...)

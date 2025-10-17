@@ -5,10 +5,11 @@ import (
 )
 
 type HTTPServer struct {
-	Address      string        `yaml:"address" env:"HTTP_ADDRESS" env-default:"localhost"`
+	Host         string        `yaml:"host" env:"HTTP_ADDRESS" env-default:"localhost"`
 	Port         string        `yaml:"port" env:"HTTP_PORT" env-default:"8080"`
 	Timeout      time.Duration `yaml:"timeout" env:"HTTP_TIMEOUT" env-default:"4s"`
 	IdleTimeout  time.Duration `yaml:"idle_timeout" env:"HTTP_IDLE_TIMEOUT" env-default:"60s"`
+	ReleaseMode  bool          `yaml:"release_mode" env:"HTTP_RELEASE_MODE" env-default:"false"`
 	CORS         bool          `yaml:"cors" env:"HTTP_CORS"`
 	AllowOrigins []string      `yaml:"allow_origins" env:"HTTP_ALLOWED_ORIGINS"`
 }

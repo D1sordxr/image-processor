@@ -84,7 +84,7 @@ func (uc *UseCase) Upload(ctx context.Context, in input.UploadImageInput) (*outp
 			return fmt.Errorf("save image metadata: %w", innerErr)
 		}
 
-		if innerErr = uc.queue.PublishImageTask(ctx, &model.ProcessingImage{
+		if innerErr = uc.queue.Publish(ctx, &model.ProcessingImage{
 			ImageID:   imageID.String(),
 			Options:   in.Options,
 			Timestamp: time.Now(),

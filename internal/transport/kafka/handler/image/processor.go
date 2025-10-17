@@ -33,3 +33,7 @@ func (h *ProcessorHandler) Start(ctx context.Context) error {
 
 	return h.consumer.StartProcessing(ctx, h.uc.Process)
 }
+
+func (h *ProcessorHandler) Stop(_ context.Context) error {
+	return nil
+}

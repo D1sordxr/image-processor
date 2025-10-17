@@ -3,9 +3,10 @@ package http
 import (
 	"context"
 	"errors"
-	"github.com/D1sordxr/image-processor/internal/transport/http/setup"
 	"net/http"
 	"time"
+
+	"github.com/D1sordxr/image-processor/internal/transport/http/setup"
 
 	"github.com/D1sordxr/image-processor/internal/domain/app/port"
 
@@ -70,7 +71,7 @@ func NewServer(
 func (s *Server) Run(_ context.Context) error {
 	s.log.Info("Registering HTTP handlers...")
 	for _, handler := range s.handlers {
-		group := s.engine.Group("/api")
+		group := s.engine.Group("/app")
 		handler.RegisterRoutes(group)
 	}
 

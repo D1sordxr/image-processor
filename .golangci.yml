@@ -1,0 +1,35 @@
+version: "2"
+run:
+  tests: true
+linters:
+  enable:
+    - asasalint
+    - bodyclose
+    - gocyclo
+    - govet
+    - staticcheck
+    - errcheck
+    - unused
+    - ineffassign
+    - bodyclose
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+issues:
+  max-issues-per-linter: 100
+  max-same-issues: 5
+formatters:
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$

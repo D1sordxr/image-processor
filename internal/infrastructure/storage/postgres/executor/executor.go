@@ -42,7 +42,7 @@ func (e *Executor) WithTransaction(
 	txOpts *sql.TxOptions,
 	fn func(ctx context.Context) error,
 ) error {
-	tx, err := e.DB.Master.BeginTx(ctx, txOpts)
+	tx, err := e.Master.BeginTx(ctx, txOpts)
 	if err != nil {
 		return err
 	}
