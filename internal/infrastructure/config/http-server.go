@@ -12,4 +12,6 @@ type HTTPServer struct {
 	ReleaseMode  bool          `yaml:"release_mode" env:"HTTP_RELEASE_MODE" env-default:"false"`
 	CORS         bool          `yaml:"cors" env:"HTTP_CORS"`
 	AllowOrigins []string      `yaml:"allow_origins" env:"HTTP_ALLOWED_ORIGINS"`
+	ServeUI      bool          `yaml:"serve_ui" env:"HTTP_SERVE_UI" env-default:"false"`
+	UIPath       string        `yaml:"ui_path" env:"HTTP_UI_PATH" env-default:"/ui/index.html"`
 }

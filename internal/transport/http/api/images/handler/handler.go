@@ -2,6 +2,7 @@ package handler
 
 import (
 	"fmt"
+	"github.com/D1sordxr/image-processor/internal/transport/http/api/images/dto"
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -16,7 +17,6 @@ import (
 	"github.com/D1sordxr/image-processor/internal/domain/core/image/model"
 	"github.com/D1sordxr/image-processor/internal/domain/core/image/vo"
 	sharedVO "github.com/D1sordxr/image-processor/internal/domain/core/shared/vo"
-	"github.com/D1sordxr/image-processor/internal/transport/http/api/image/dto"
 	"github.com/D1sordxr/image-processor/pkg/logger"
 
 	"github.com/wb-go/wbf/ginext"
@@ -349,10 +349,10 @@ func (h *Handler) ServeFrontend(c *ginext.Context) {
 
 func (h *Handler) RegisterRoutes(router *ginext.RouterGroup) {
 	router.POST("/upload", h.UploadNewImage)
-	router.GET("/image/:id", h.GetProcessedImage)
-	router.GET("/image/:id/status", h.GetImageStatus)
-	// router.POST("/image/:id/process", h.ProcessImageSync)
-	router.DELETE("/image/:id", h.DeleteImage)
+	router.GET("/images/:id", h.GetProcessedImage)
+	router.GET("/images/:id/status", h.GetImageStatus)
+	// router.POST("/images/:id/process", h.ProcessImageSync)
+	router.DELETE("/images/:id", h.DeleteImage)
 	router.GET("/health", h.HealthCheck)
 	router.GET("/", h.ServeFrontend)
 }

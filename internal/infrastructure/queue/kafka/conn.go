@@ -1,4 +1,4 @@
-package queue
+package kafka
 
 import (
 	"context"
@@ -14,8 +14,7 @@ import (
 )
 
 type Connection struct {
-	cfg  *config.Kafka
-	conn *kafka.Conn
+	cfg *config.Kafka
 
 	*wbfKafka.Producer // TODO: move to ./image/... to move topic creation into run func
 	*wbfKafka.Consumer
@@ -24,23 +23,17 @@ type Connection struct {
 }
 
 func New(cfg config.Kafka) *Connection {
-	conn, err := kafka.Dial("tcp", cfg.Address)
-	if err != nil {
-		panic("failed to connect to kafka")
-	}
 	connection := &Connection{
-		cfg:  &cfg,
-		conn: conn,
+		cfg:      &cfg,
+		Producer: wbfKafka.NewProducer(cfg.PrepWbfProducer()),
+		Consumer: wbfKafka.NewConsumer(cfg.PrepWbfConsumer()),
 	}
 
 	if cfg.CreateTopic {
-		if err = connection.createTopic(); err != nil {
+		if err := createTopic(connection.cfg); err != nil {
 			panic("failed to create topic")
 		}
 	}
-
-	connection.Producer = wbfKafka.NewProducer(cfg.PrepWbfProducer())
-	connection.Consumer = wbfKafka.NewConsumer(cfg.PrepWbfConsumer())
 
 	return connection
 }
@@ -50,32 +43,37 @@ const (
 	replicationFactor = 1
 )
 
-func (w *Connection) createTopic() error {
-	if err := w.conn.CreateTopics(kafka.TopicConfig{
-		Topic:             w.cfg.ImageTopic,
+func createTopic(cfg *config.Kafka) error {
+	conn, err := kafka.Dial("tcp", cfg.Address)
+	if err != nil {
+		panic("failed to connect to kafka")
+	}
+	defer func() { _ = conn.Close() }()
+	if err := conn.CreateTopics(kafka.TopicConfig{
+		Topic:             cfg.ImageTopic,
 		NumPartitions:     partitions,
 		ReplicationFactor: replicationFactor,
 	}); err != nil {
-		return fmt.Errorf("create topic: %w", err)
+		return fmt.Errorf("create topic err: %w", err)
 	}
-	return nil
-}
-
-func (w *Connection) healthCheck() error {
-	if w.isClosed.Load() {
-		return fmt.Errorf("connection closed")
+	if err := conn.CreateTopics(kafka.TopicConfig{
+		Topic:             cfg.HealthTopic,
+		NumPartitions:     partitions,
+		ReplicationFactor: replicationFactor,
+	}); err != nil {
+		return fmt.Errorf("create topic err: %w", err)
 	}
-
-	if _, err := w.conn.ReadPartitions(); err != nil {
-		return fmt.Errorf("health check failed: %w", err)
-	}
-
 	return nil
 }
 
 func (w *Connection) Run(ctx context.Context) error {
 	const op = "kafka.Connection.Run"
 
+	healthWriter := kafka.Writer{
+		Addr:                   kafka.TCP(w.cfg.Address),
+		Topic:                  w.cfg.HealthTopic,
+		AllowAutoTopicCreation: true,
+	}
 	healthTicker := ticker.NewHealth()
 	defer healthTicker.Stop()
 
@@ -84,7 +82,11 @@ func (w *Connection) Run(ctx context.Context) error {
 		case <-ctx.Done():
 			return nil
 		case <-healthTicker.C:
-			if err := w.healthCheck(); err != nil {
+			if err := healthWriter.WriteMessages(ctx, kafka.Message{
+				Key:   nil,
+				Value: nil,
+				Time:  time.Now(),
+			}); err != nil {
 				return fmt.Errorf("%s: %w", op, err)
 			}
 		}
@@ -116,7 +118,6 @@ func (w *Connection) Shutdown(ctx context.Context) error {
 		}
 	}
 
-	wg.Go(func() { closeResource("connection", w.conn.Close) })
 	wg.Go(func() { closeResource("consumer", w.Consumer.Close) })
 	wg.Go(func() { closeResource("producer", w.Producer.Close) })
 

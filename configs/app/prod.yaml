@@ -4,6 +4,11 @@ server:
   timeout: "30s"
   idle_timeout: "120s"
   cors: true
+  release_mode: false
+  allowed_origins:
+    - "*"
+  serve_ui: true
+  ui_path: "/ui/index.html"
 
 storage:
   host: "postgres"
@@ -16,6 +21,7 @@ storage:
 
 broker:
   address: "kafka:9092"
+  health_topic: "health-check"
   image_topic: "image-processing-tasks"
   processor_group: "processor-group"
   create_topic: true

@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"github.com/D1sordxr/image-processor/internal/infrastructure/queue/kafka"
+	"github.com/D1sordxr/image-processor/internal/transport/http/api/images/handler"
 	"os"
 	"os/signal"
 	"syscall"
@@ -9,7 +11,6 @@ import (
 	"github.com/D1sordxr/image-processor/internal/application/image/usecase"
 	"github.com/D1sordxr/image-processor/internal/domain/core/shared/vo"
 	"github.com/D1sordxr/image-processor/internal/infrastructure/image/processor"
-	"github.com/D1sordxr/image-processor/internal/infrastructure/queue"
 	"github.com/D1sordxr/image-processor/internal/infrastructure/queue/kafka/image/consumer"
 	"github.com/D1sordxr/image-processor/internal/infrastructure/queue/kafka/image/producer"
 	"github.com/D1sordxr/image-processor/internal/infrastructure/storage/minio"
@@ -18,7 +19,6 @@ import (
 	"github.com/D1sordxr/image-processor/internal/infrastructure/storage/postgres/repositories/image/repo"
 	"github.com/D1sordxr/image-processor/internal/infrastructure/storage/postgres/txmanager"
 	defaultWorker "github.com/D1sordxr/image-processor/internal/infrastructure/worker"
-	"github.com/D1sordxr/image-processor/internal/transport/http/api/image/handler"
 	"github.com/D1sordxr/image-processor/internal/transport/kafka/handler/image"
 
 	loadApp "github.com/D1sordxr/image-processor/internal/infrastructure/app"
@@ -37,11 +37,10 @@ func main() {
 
 	cfg := config.NewAppConfig()
 	log := logger.New(defaultLogger)
-	log.Debug("Application data", "config", cfg)
 
 	storageConn := postgres.New(cfg.Storage)
 	s3Conn := minio.New(cfg.S3Storage)
-	brokerConn := queue.New(cfg.Broker)
+	brokerConn := kafka.New(cfg.Broker)
 
 	storageExecutor := executor.New(storageConn.Storage)
 	txManager := txmanager.New(storageExecutor)

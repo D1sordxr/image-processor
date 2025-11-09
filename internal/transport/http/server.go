@@ -3,7 +3,10 @@ package http
 import (
 	"context"
 	"errors"
+	"fmt"
+	"github.com/gin-gonic/gin"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/D1sordxr/image-processor/internal/transport/http/setup"
@@ -22,24 +25,30 @@ type routeRegisterer interface {
 
 type Server struct {
 	log      port.Logger
-	handlers []routeRegisterer
+	cfg      *config.HTTPServer
 	engine   *ginext.Engine
 	server   *http.Server
+	handlers []routeRegisterer
 }
 
 func NewServer(
 	log port.Logger,
-	config *config.HTTPServer,
+	cfg *config.HTTPServer,
 	handlers ...routeRegisterer,
 ) *Server {
-	log.Info("Initializing HTTP server", "port", config.Port)
+	log.Info("Initializing HTTP server", "port", cfg.Port)
 
-	engine := ginext.New(setup.ReleaseMode)
+	var engine *ginext.Engine
+	if cfg.ReleaseMode {
+		engine = ginext.New(setup.ReleaseMode)
+	} else {
+		engine = ginext.New("")
+	}
 	engine.Use(middleware.Logger())
 	engine.Use(middleware.Recovery())
 
-	if config.CORS {
-		allowedOrigins := config.AllowOrigins
+	if cfg.CORS {
+		allowedOrigins := cfg.AllowOrigins
 		if len(allowedOrigins) == 0 {
 			allowedOrigins = []string{"*"}
 		}
@@ -57,11 +66,11 @@ func NewServer(
 	return &Server{
 		log: log,
 		server: &http.Server{
-			Addr:              ":" + config.Port,
+			Addr:              ":" + cfg.Port,
 			Handler:           engine.Handler(),
-			ReadHeaderTimeout: config.Timeout,
-			ReadTimeout:       config.Timeout,
-			WriteTimeout:      config.Timeout,
+			ReadHeaderTimeout: cfg.Timeout,
+			ReadTimeout:       cfg.Timeout,
+			WriteTimeout:      cfg.Timeout,
 		},
 		engine:   engine,
 		handlers: handlers,
@@ -69,6 +78,24 @@ func NewServer(
 }
 
 func (s *Server) Run(_ context.Context) error {
+	if s.cfg.ServeUI { // TODO fix panic
+		uiHandler := func(c *gin.Context) {
+			if _, err := os.Stat(s.cfg.UIPath); os.IsNotExist(err) {
+				s.log.Error("UI file not found", "path", s.cfg.UIPath)
+				c.JSON(500, gin.H{"error": "UI not available"})
+				return
+			}
+			c.File(s.cfg.UIPath)
+		}
+		s.log.Info("Serving UI",
+			"path", fmt.Sprintf("http://%s:%s/ui/index.html", s.cfg.Host, s.cfg.Port),
+		)
+
+		// TODO s.engine.Static("/static", "ui/static")
+		s.engine.GET("/", uiHandler)
+		s.engine.NoRoute(uiHandler)
+	}
+
 	s.log.Info("Registering HTTP handlers...")
 	for _, handler := range s.handlers {
 		group := s.engine.Group("/api")

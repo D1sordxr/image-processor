@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Processor</title>
+    <style>
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .upload-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:disabled {
+            background: #ccc;
+        }
+
+        .image-item {
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            background: #f9f9f9;
+        }
+
+        .status {
+            font-weight: bold;
+        }
+
+        .status-processing {
+            color: #ff9800;
+        }
+
+        .status-completed {
+            color: #28a745;
+        }
+
+        .status-failed {
+            color: #dc3545;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+        }
+
+        .processing-options {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #eee;
+            border-radius: 5px;
+            background: #f8f9fa;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .checkbox label {
+            display: flex;
+            align-items: center;
+            font-weight: normal;
+        }
+
+        .checkbox input[type="checkbox"] {
+            width: auto;
+            margin-right: 8px;
+        }
+
+        .toggle-options {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+
+        .btn-delete {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .btn-delete:hover {
+            background: #c82333;
+        }
+
+        .image-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .image-actions button {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .image-actions button:first-child {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .image-actions button:first-child:hover {
+            background: #138496;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <header>
+        <h1>🖼️ Image Processor</h1>
+        <p>Загружайте изображения для обработки в фоновом режиме</p>
+    </header>
+
+    <!-- Форма загрузки -->
+    <div class="upload-section">
+        <h2>Загрузить новое изображение</h2>
+
+        <button type="button" class="toggle-options" onclick="toggleOptions()">
+            ▽ Показать опции обработки
+        </button>
+
+        <form id="uploadForm" enctype="multipart/form-data" method="POST">
+            <div class="form-group">
+                <label for="imageFile">Выберите изображение:</label>
+                <input type="file" id="imageFile" name="image" accept="image/*" required>
+            </div>
+
+            <!-- Опции обработки (скрыты по умолчанию) -->
+            <div id="processingOptions" class="processing-options" style="display: none;">
+                <h3>Опции обработки:</h3>
+
+                <div class="options-grid">
+                    <div class="form-group">
+                        <label for="width">Ширина:</label>
+                        <input type="number" id="width" name="width" min="1" placeholder="px">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="height">Высота:</label>
+                        <input type="number" id="height" name="height" min="1" placeholder="px">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="quality">Качество (1-100):</label>
+                        <input type="number" id="quality" name="quality" min="1" max="100" placeholder="85">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="format">Формат:</label>
+                        <select id="format" name="format">
+                            <option value="">Оригинальный</option>
+                            <option value="jpeg">JPEG</option>
+                            <option value="png">PNG</option>
+                            <option value="gif">GIF</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="watermark">Водяной знак:</label>
+                        <input type="text" id="watermark" name="watermark" placeholder="Текст водяного знака">
+                    </div>
+
+                    <div class="form-group checkbox">
+                        <label>
+                            <input type="checkbox" id="thumbnail" name="thumbnail" value="true">
+                            Миниатюра
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" id="uploadBtn">Загрузить и обработать</button>
+        </form>
+    </div>
+
+    <!-- Секция с загруженными изображениями -->
+    <div class="images-section">
+        <h2>Загруженные изображения</h2>
+        <div id="imagesList">
+            <div class="empty-state" id="emptyState">
+                <p>Нет загруженных изображений</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="/static/scripts.js"></script>
+<script>
+    function toggleOptions() {
+        const options = document.getElementById('processingOptions');
+        const button = document.querySelector('.toggle-options');
+
+        if (options.style.display === 'none') {
+            options.style.display = 'block';
+            button.textContent = '△ Скрыть опции обработки';
+        } else {
+            options.style.display = 'none';
+            button.textContent = '▽ Показать опции обработки';
+        }
+    }
+
+    function checkStatus(imageId) {
+        fetch(`${window.app.baseUrl}/image/${imageId}`)
+            .then(response => {
+                if (response.ok) {
+                    const contentType = response.headers.get('content-type');
+
+                    if (contentType && contentType.includes('application/json')) {
+                        return response.json().then(data => {
+                            window.app.updateImageStatus(imageId, data.status, data.image_url);
+                        });
+                    } else if (contentType && contentType.includes('image/')) {
+                        window.app.updateImageStatus(imageId, 'completed', `${window.app.baseUrl}/image/${imageId}`);
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Manual status check error:', error);
+            });
+    }
+</script>
+</body>
+</html>

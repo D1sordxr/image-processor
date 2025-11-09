@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"golang.org/x/sync/errgroup"
 	"time"
 
 	"github.com/D1sordxr/image-processor/internal/domain/app/port"
@@ -27,39 +28,27 @@ func NewApp(
 func (a *App) Run(ctx context.Context) {
 	defer a.shutdown()
 
-	errChan := make(chan error)
+	errChan := make(chan error, 1)
+	errGroup, ctx := errgroup.WithContext(ctx)
+	go func() { errChan <- errGroup.Wait() }()
+
 	for i, c := range a.components {
-		func(idx int, component port.Component) {
-			var (
-				startCtx, startCancel = context.WithTimeout(ctx, 5*time.Second)
-				startErrChan          = make(chan error, 1)
-				startErr              error
+		idx, component := i, c
+		errGroup.Go(func() error {
+			a.log.Info("Starting component",
+				"idx", idx,
+				"type", fmt.Sprintf("%T", component),
 			)
-			defer startCancel()
-			defer close(startErrChan)
-
-			go func() {
-				a.log.Info("Starting Component",
+			startErr := c.Run(ctx)
+			if startErr != nil {
+				a.log.Error("Component failed",
 					"idx", idx,
-					"type", fmt.Sprintf("%T", c),
+					"type", fmt.Sprintf("%T", component),
+					"error", startErr.Error(),
 				)
-				if startErr = c.Run(ctx); startErr != nil {
-					a.log.Error("Component failed",
-						"idx", idx,
-						"type", fmt.Sprintf("%T", c),
-						"error", startErr.Error(),
-					)
-					startErrChan <- startErr
-				}
-			}()
-
-			select {
-			case err := <-startErrChan:
-				errChan <- err
-				break
-			case <-startCtx.Done():
 			}
-		}(i, c)
+			return startErr
+		})
 	}
 
 	select {
